@@ -49,6 +49,14 @@ public class Movie {
     @JoinColumn(name="fk_director_id", nullable = true)
     private Person director;
 
+    @ManyToMany // fetch Lazy default
+    @JoinTable(
+            name = "play",
+            joinColumns = @JoinColumn(name="fk_movie_id"), // FK to this entity
+            inverseJoinColumns = @JoinColumn(name="fk_actor_id") // FK to other entity
+    )
+    private List<Person> actors = new ArrayList<>();
+
     // mandatory if at least another constructor
     public Movie(){
         // genres = new ArrayList<>();
@@ -140,6 +148,14 @@ public class Movie {
 
     public void setDirector(Person director) {
         this.director = director;
+    }
+
+    public List<Person> getActors() {
+        return actors;
+    }
+
+    public void setActors(List<Person> actors) {
+        this.actors = actors;
     }
 
     @Override
