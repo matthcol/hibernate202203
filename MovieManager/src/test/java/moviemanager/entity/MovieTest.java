@@ -16,6 +16,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -86,6 +87,36 @@ class MovieTest {
         Movie movieRead = entityManager.find(Movie.class, idMovie);
         System.out.println(movieRead);
         System.out.println(movieRead.getDirector());
+    }
+
+
+    /**
+     * this test is written in Java 11
+     */
+    @Test
+    void testSaveMovieWithActors(){
+        var movie = new Movie("Pulp Fiction", 1994);
+        var actors = List.of(
+                new Person("John Travolta", LocalDate.of(1954,2,18)),
+                new Person("Uma Thurman", LocalDate.of(1970, 4, 29)),
+                new Person("Bruce Willis", LocalDate.of(1955,3,19))
+        );
+        entityManager.persist(movie);
+        // for (var p: actors){
+        //     entityManager.persist(p);
+        // }
+        // actors.forEach((Person p) -> entityManager.persist(p));
+        // actors.forEach(p -> entityManager.persist(p));
+        actors.forEach(entityManager::persist);
+        entityManager.flush();
+        movie.getActors().addAll(actors);
+        entityManager.flush(); // force SQL synchro : 3 insert into play
+        var idMovie = movie.getId();
+        // clear cache
+        entityManager.clear();
+        var movieRead = entityManager.find(Movie.class, idMovie);
+        System.out.println(movieRead);
+        movieRead.getActors().forEach(a -> System.out.println("\t - " + a));
     }
 
 }
