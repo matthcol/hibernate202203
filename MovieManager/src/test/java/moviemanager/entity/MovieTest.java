@@ -16,6 +16,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 
 import java.time.LocalDate;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -74,18 +75,20 @@ class MovieTest {
     @Test
     void testSaveMovieWithDirector(){
         Movie movie = new Movie("Django Unchained", 2012);
+        Movie movie2 = new Movie("Pulp Fiction", 1994);
         Person person = new Person("Quentin Tarantino", LocalDate.of(1963, 3, 27));
         entityManager.persist(movie);
+        entityManager.persist(movie2);
         entityManager.persist(person);
         entityManager.flush();
-        movie.setDirector(person);
-        entityManager.flush(); // to generate DML update now
-        int idMovie = movie.getId();
+        Collections.addAll(person.getDirectedMovies(), movie, movie2);
+        entityManager.flush(); // to generate DML update x 2 now
+        int idPerson = person.getId();
         // clear cache before reading data persisted
         entityManager.clear();
-        Movie movieRead = entityManager.find(Movie.class, idMovie);
-        System.out.println(movieRead);
-        System.out.println(movieRead.getDirector());
+        Person personRead = entityManager.find(Person.class, idPerson);
+        System.out.println(personRead);
+        System.out.println(personRead.getDirectedMovies());
     }
 
 }

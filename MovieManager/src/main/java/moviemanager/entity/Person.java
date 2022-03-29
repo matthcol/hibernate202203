@@ -2,6 +2,8 @@ package moviemanager.entity;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 public class Person {
@@ -10,10 +12,13 @@ public class Person {
     private Integer  id;
     private String name;
 
-
     // @Temporal(TemporalType.DATE) // DO NOT USE HERE
     // @Temporal should only be set on a java.util.Date or java.util.Calendar property
     private LocalDate birthdate;
+
+    @OneToMany // fetch Lazy by default
+    @JoinColumn(name="fk_director_id", nullable = true)
+    private Set<Movie> directedMovies = new HashSet<>();
 
     public Person() {
     }
@@ -49,6 +54,14 @@ public class Person {
 
     public void setBirthdate(LocalDate birthdate) {
         this.birthdate = birthdate;
+    }
+
+    public Set<Movie> getDirectedMovies() {
+        return directedMovies;
+    }
+
+    public void setDirectedMovies(Set<Movie> directedMovies) {
+        this.directedMovies = directedMovies;
     }
 
     @Override
