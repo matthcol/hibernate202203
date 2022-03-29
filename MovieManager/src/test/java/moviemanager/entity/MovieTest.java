@@ -17,6 +17,7 @@ import javax.persistence.PersistenceException;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -99,5 +100,51 @@ class MovieTest {
         System.out.println(movieRead);
         System.out.println(movieRead.getDirector());
     }
+
+    /**
+     * this test is written in Java 11
+     */
+    @Test
+    void testSaveMovieWithActors(){
+        var movie = new Movie("Pulp Fiction", 1994);
+        var movie2 = new Movie("Kill Bill: Vol. 1", 2003);
+        var actors = List.of(
+                new Person("John Travolta", LocalDate.of(1954,2,18)),
+                new Person("Uma Thurman", LocalDate.of(1970, 4, 29)),
+                new Person("Bruce Willis", LocalDate.of(1955,3,19))
+        );
+        entityManager.persist(movie);
+        entityManager.persist(movie2);
+        // for (var p: actors){
+        //     entityManager.persist(p);
+        // }
+        // actors.forEach((Person p) -> entityManager.persist(p));
+        // actors.forEach(p -> entityManager.persist(p));
+        actors.forEach(entityManager::persist);
+        entityManager.flush();
+        // associate objects (bidirectional)
+        // - actors of Pulp Fiction
+        movie.getActors().addAll(actors);
+        actors.forEach(a -> a.getPlayedMovies().add(movie));
+        // - actor of Kill Bill
+        var uma = actors.get(1);
+        movie2.getActors().add(uma);
+        uma.getPlayedMovies().add(movie2);
+        entityManager.flush(); // force SQL synchro : 3 insert into play
+        // remember some ids before cleaning cache
+        var idMovie = movie.getId();
+        var idUma = uma.getId();
+        // clear cache
+        entityManager.clear();
+        var movieRead = entityManager.find(Movie.class, idMovie);
+        System.out.println(movieRead);
+        movieRead.getActors().forEach(a -> System.out.println("\t - " + a));
+        // clear cache again
+        entityManager.clear();
+        var actorRead = entityManager.find(Person.class, idUma);
+        System.out.println(actorRead);
+        actorRead.getPlayedMovies().forEach(m -> System.out.println("\t * " + m));
+    }
+
 
 }
