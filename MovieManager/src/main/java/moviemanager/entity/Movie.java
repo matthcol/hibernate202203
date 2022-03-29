@@ -2,7 +2,9 @@ package moviemanager.entity;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "movie")
@@ -49,27 +51,18 @@ public class Movie {
     @JoinColumn(name="fk_director_id", nullable = true)
     private Person director;
 
-    @ManyToMany // fetch Lazy default
-    @JoinTable(
-            name = "play",
-            joinColumns = @JoinColumn(name="fk_movie_id"), // FK to this entity
-            inverseJoinColumns = @JoinColumn(name="fk_actor_id") // FK to other entity
-    )
-    private List<Person> actors = new ArrayList<>();
+    @OneToMany(mappedBy = "movie")
+    private Set<Play> plays = new HashSet<>();
 
-    // mandatory if at least another constructor
     public Movie(){
-        // genres = new ArrayList<>();
     }
 
     public Movie(String title, Integer year) {
-        // this(); // to initialize collections
         this.title = title;
         this.year = year;
     }
 
     public Movie(String title, Integer year, Short duration, String countryOrigin, Integer budget, Color color) {
-        // this(); // to initialize collections
         this.title = title;
         this.year = year;
         this.duration = duration;
@@ -150,12 +143,12 @@ public class Movie {
         this.director = director;
     }
 
-    public List<Person> getActors() {
-        return actors;
+    public Set<Play> getPlays() {
+        return plays;
     }
 
-    public void setActors(List<Person> actors) {
-        this.actors = actors;
+    public void setPlays(Set<Play> plays) {
+        this.plays = plays;
     }
 
     @Override

@@ -18,6 +18,8 @@ import javax.persistence.PersistenceException;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -104,46 +106,65 @@ class MovieTest {
     /**
      * this test is written in Java 11
      */
+    @Rollback(false)
     @Test
     void testSaveMovieWithActors(){
-        var movie = new Movie("Pulp Fiction", 1994);
-        var movie2 = new Movie("Kill Bill: Vol. 1", 2003);
-        var actors = List.of(
-                new Person("John Travolta", LocalDate.of(1954,2,18)),
-                new Person("Uma Thurman", LocalDate.of(1970, 4, 29)),
-                new Person("Bruce Willis", LocalDate.of(1955,3,19))
+        var moviePulp = new Movie("Pulp Fiction", 1994);
+        var movieKB1 = new Movie("Kill Bill: Vol. 1", 2003);
+        var movieKB2 = new Movie("Kill Bill: Vol. 2", 2004);
+        var movies = List.of(moviePulp, movieKB1, movieKB2);
+        var uma = new Person("Uma Thurman", LocalDate.of(1970, 4, 29));
+        var castPulp = Map.of(
+                new Person("John Travolta", LocalDate.of(1954,2,18)), "Vincent Vega",
+                new Person("Samuel L. Jackson", LocalDate.of(1948, 12, 21)), "Jules Winnfield",
+                new Person("Bruce Willis", LocalDate.of(1955,3,19)), "Butch Coolidge"
         );
-        entityManager.persist(movie);
-        entityManager.persist(movie2);
-        // for (var p: actors){
-        //     entityManager.persist(p);
-        // }
-        // actors.forEach((Person p) -> entityManager.persist(p));
-        // actors.forEach(p -> entityManager.persist(p));
-        actors.forEach(entityManager::persist);
-        entityManager.flush();
+        var filmoUma = Map.of(
+                moviePulp, "Mia Wallace",
+                movieKB1, "The Bride",
+                movieKB2, "Beatrix Kiddo aka The Bride aka Black Mamba aka Mommy"
+        );
+        // persist movies
+        movies.forEach(entityManager::persist);
+        // persist actor/persons
+        castPulp.keySet().forEach(entityManager::persist);
+        entityManager.persist(uma);
+        entityManager.flush(); // generate DML for movies and actors
         // associate objects (bidirectional)
         // - actors of Pulp Fiction
-        movie.getActors().addAll(actors);
-        actors.forEach(a -> a.getPlayedMovies().add(movie));
-        // - actor of Kill Bill
-        var uma = actors.get(1);
-        movie2.getActors().add(uma);
-        uma.getPlayedMovies().add(movie2);
+        castPulp.forEach((a, r) -> {
+                    // play to (movie, actor/person)
+                    var play = new Play(moviePulp, a, r);
+                    // movie to play
+                    moviePulp.getPlays().add(play);
+                    // actor/person to play
+                    a.getPlays().add(play);
+                    entityManager.persist(play);
+            });
+        entityManager.flush(); // force SQL synchro : 3 insert into play
+        // - other movies of Uma Thurman
+        filmoUma.forEach((m,r) -> {
+                    var play = new Play(m, uma, r);
+                    m.getPlays().add(play);
+                    uma.getPlays().add(play);
+                    entityManager.persist(play);
+                });
         entityManager.flush(); // force SQL synchro : 3 insert into play
         // remember some ids before cleaning cache
-        var idMovie = movie.getId();
+        var idMoviePulp = moviePulp.getId();
         var idUma = uma.getId();
         // clear cache
+        // read cast of a movie
         entityManager.clear();
-        var movieRead = entityManager.find(Movie.class, idMovie);
+        var movieRead = entityManager.find(Movie.class, idMoviePulp);
         System.out.println(movieRead);
-        movieRead.getActors().forEach(a -> System.out.println("\t - " + a));
+        movieRead.getPlays().forEach(pl -> System.out.println("\t - " + pl.getActor() + " as " + pl.getRole()));
         // clear cache again
+        // read filmography as an actor
         entityManager.clear();
         var actorRead = entityManager.find(Person.class, idUma);
         System.out.println(actorRead);
-        actorRead.getPlayedMovies().forEach(m -> System.out.println("\t * " + m));
+        actorRead.getPlays().forEach(pl -> System.out.println("\t * " + pl.getMovie() + " as " + pl.getRole()));
     }
 
 

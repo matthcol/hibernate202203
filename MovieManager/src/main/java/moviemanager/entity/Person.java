@@ -20,8 +20,8 @@ public class Person {
     @OneToMany(mappedBy = "director")
     private Set<Movie> directedMovies = new HashSet<>();
 
-    @ManyToMany(mappedBy = "actors")
-    private Set<Movie> playedMovies = new HashSet<>();
+    @OneToMany(mappedBy = "actor")
+    private Set<Play> plays = new HashSet<>();
 
     public Person() {
     }
@@ -67,12 +67,12 @@ public class Person {
         this.directedMovies = directedMovies;
     }
 
-    public Set<Movie> getPlayedMovies() {
-        return playedMovies;
+    public Set<Play> getPlays() {
+        return plays;
     }
 
-    public void setPlayedMovies(Set<Movie> playedMovies) {
-        this.playedMovies = playedMovies;
+    public void setPlays(Set<Play> plays) {
+        this.plays = plays;
     }
 
     @Override
