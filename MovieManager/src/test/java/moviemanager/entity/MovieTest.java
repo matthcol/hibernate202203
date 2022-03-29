@@ -10,9 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.annotation.Rollback;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
+
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,6 +68,24 @@ class MovieTest {
         Movie movie = new Movie(title, 2021);
         assertThrows(PersistenceException.class,
                 () -> entityManager.persist(movie));
+    }
+
+    //@Rollback(false)
+    @Test
+    void testSaveMovieWithDirector(){
+        Movie movie = new Movie("Django Unchained", 2012);
+        Person person = new Person("Quentin Tarantino", LocalDate.of(1963, 3, 27));
+        entityManager.persist(movie);
+        entityManager.persist(person);
+        entityManager.flush();
+        movie.setDirector(person);
+        entityManager.flush(); // to generate DML update now
+        int idMovie = movie.getId();
+        // clear cache before reading data persisted
+        entityManager.clear();
+        Movie movieRead = entityManager.find(Movie.class, idMovie);
+        System.out.println(movieRead);
+        System.out.println(movieRead.getDirector());
     }
 
 }

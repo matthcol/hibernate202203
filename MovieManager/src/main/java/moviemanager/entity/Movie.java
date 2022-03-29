@@ -1,6 +1,8 @@
 package moviemanager.entity;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "movie")
@@ -30,17 +32,36 @@ public class Movie {
     @Enumerated(EnumType.STRING)  // STRING or ORDINAL (default)
     private Color color;
 
+    // NB: for list you can add @OrderColumn
+    @ElementCollection
+    @CollectionTable(
+            name = "genre",
+            joinColumns = @JoinColumn(name = "fk_movie_id"))
+    @Column(name="genre")
+    private List<String> genres = new ArrayList<>(); // or initialize in constructor
+    // private Set<String> genres;
+
+    // @Transient // when mapping is not ready
+    @ManyToOne(
+            optional = true,
+            fetch = FetchType.LAZY // default Eager
+    )
+    @JoinColumn(name="fk_director_id", nullable = true)
+    private Person director;
+
     // mandatory if at least another constructor
     public Movie(){
-
+        // genres = new ArrayList<>();
     }
 
     public Movie(String title, Integer year) {
+        // this(); // to initialize collections
         this.title = title;
         this.year = year;
     }
 
     public Movie(String title, Integer year, Short duration, String countryOrigin, Integer budget, Color color) {
+        // this(); // to initialize collections
         this.title = title;
         this.year = year;
         this.duration = duration;
@@ -105,6 +126,22 @@ public class Movie {
         this.color = color;
     }
 
+    public List<String> getGenres() {
+        return genres;
+    }
+
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
+    }
+
+    public Person getDirector() {
+        return director;
+    }
+
+    public void setDirector(Person director) {
+        this.director = director;
+    }
+
     @Override
     public String toString() {
         return "Movie{" +
@@ -113,6 +150,8 @@ public class Movie {
                 ", year=" + year +
                 ", duration=" + duration +
                 ", countryOrigin='" + countryOrigin + '\'' +
+                ", budget=" + budget +
+                ", color=" + color +
                 '}';
     }
 }
