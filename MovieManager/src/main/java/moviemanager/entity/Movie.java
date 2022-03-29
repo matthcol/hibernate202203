@@ -6,7 +6,9 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "movie", uniqueConstraints = @UniqueConstraint(columnNames = {"title", "year"}))
@@ -62,7 +64,7 @@ public class Movie {
             joinColumns = @JoinColumn(name="fk_movie_id"), // FK to this entity
             inverseJoinColumns = @JoinColumn(name="fk_actor_id") // FK to other entity
     )
-    private List<Person> actors = new ArrayList<>();
+    private Set<Person> actors = new HashSet<>();
 
     // mandatory if at least another constructor
     public Movie(){
@@ -157,11 +159,11 @@ public class Movie {
         this.director = director;
     }
 
-    public List<Person> getActors() {
+    public Set<Person> getActors() {
         return actors;
     }
 
-    public void setActors(List<Person> actors) {
+    public void setActors(Set<Person> actors) {
         this.actors = actors;
     }
 

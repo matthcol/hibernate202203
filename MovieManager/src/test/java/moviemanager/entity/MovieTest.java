@@ -153,6 +153,12 @@ class MovieTest {
         }
     }
 
+    /**
+     * play this test with :
+     * - actors as a list : remove and rewrite all the actors
+     * - actors as a set : remove or add only 1 actor
+     * https://thorben-janssen.com/hibernate-tips-the-best-way-to-remove-entities-from-a-many-to-many-association/
+     */
     @Test
     void testUpdateOneActorAmongSeveral(){
         var movie = new Movie("Pulp Fiction", 1994);
