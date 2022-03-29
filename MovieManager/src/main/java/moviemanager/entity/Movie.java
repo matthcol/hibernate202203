@@ -1,17 +1,22 @@
 package moviemanager.entity;
 
+import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "movie")
+@Table(name = "movie", uniqueConstraints = @UniqueConstraint(columnNames = {"title", "year"}))
+// @DynamicUpdate // Hibernate (not JPA) annotation to update only what's necessary
 public class Movie {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(length = 300, nullable = false)
+    @Column(length = 300, nullable = false) //  unique = true // this column unique
     private String title;  // obligatoire
 
     @Column(nullable = false)
@@ -44,9 +49,11 @@ public class Movie {
     // @Transient // when mapping is not ready
     @ManyToOne(
             optional = true,
-            fetch = FetchType.LAZY // default Eager
+            fetch = FetchType.LAZY, // default Eager
+            cascade = { CascadeType.PERSIST, CascadeType.REMOVE }
     )
     @JoinColumn(name="fk_director_id", nullable = true)
+    // @OnDelete(action = OnDeleteAction.CASCADE) // Hibernate Only not JPA
     private Person director;
 
     @ManyToMany(fetch=FetchType.EAGER) // fetch Lazy default

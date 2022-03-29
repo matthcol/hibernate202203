@@ -119,4 +119,164 @@ class MovieTest {
         movieRead.getActors().forEach(a -> System.out.println("\t - " + a));
     }
 
+    @Test
+    void testSaveMovieDoublesTitleYear(){
+        var movie1 = new Movie("The Lion King", 1994);
+        var movie2 = new Movie("The Lion King", 1994);
+        entityManager.persist(movie1);
+        assertThrows(PersistenceException.class,
+                () -> entityManager.persist(movie2));
+    }
+
+    @Test
+    void testSaveMovieSameTitleDifferentYear(){
+        var movie1 = new Movie("The Man Who Knew Too Much", 1934);
+        var movie2 = new Movie("The Man Who Knew Too Much", 1956);
+        entityManager.persist(movie1);
+        entityManager.persist(movie2);
+    }
+
+    @Test
+    void testUpdateDirector(){
+        var movie = new Movie("Sin City", 2005);
+        var quentin = new Person("Quentin Tarantino", LocalDate.of(1963, 3, 27));
+        var robert = new Person("Robert Rodriguez", LocalDate.of(1968,6,20));
+        var franck = new Person("Franck Miller", LocalDate.of(1957,1,27));
+        var possibleDirectors = List.of(quentin, robert, franck);
+        entityManager.persist(movie);
+        possibleDirectors.forEach(entityManager::persist);
+        entityManager.flush();
+        for (var d : possibleDirectors) {
+            movie.setDirector(d);
+            entityManager.flush();
+            // TODO : clear cache and read again movie with its director
+        }
+    }
+
+    @Test
+    void testUpdateOneActorAmongSeveral(){
+        var movie = new Movie("Pulp Fiction", 1994);
+        var actors = List.of(
+                new Person("John Travolta", LocalDate.of(1954,2,18)),
+                new Person("Uma Thurman", LocalDate.of(1970, 4, 29)),
+                new Person("Bruce Willis", LocalDate.of(1955,3,19))
+        );
+        var sam = new Person("Samuel L. Jackson", LocalDate.of(1900,1,1));
+        // persist entities movie and persons
+        entityManager.persist(movie);
+        actors.forEach(entityManager::persist);
+        entityManager.persist(sam);
+        entityManager.flush();
+        // add first batch of actors
+        movie.getActors().addAll((actors));
+        entityManager.flush();
+        // add another actor
+        movie.getActors().add(sam);
+        entityManager.flush();
+        // remove one actor
+        movie.getActors().remove(sam);
+        entityManager.flush();
+    }
+
+    /**
+     * test settings cascade = CascadeType.PERSIST
+     * on many-to-many association director
+     */
+    @Test
+    void testSaveMovieWithDirectorCascade() {
+        // create movie with its director
+        Movie movie = new Movie("Django Unchained", 2012);
+        Person person = new Person("Quentin Tarantino", LocalDate.of(1963, 3, 27));
+        movie.setDirector(person);
+        // persist both by saving only movie
+        entityManager.persist(movie); // not working by default, ok if cascade persist
+        entityManager.flush();
+        // add onother movie from this person
+        var movie2 = new Movie("Pulp Fiction", 1994);
+        movie2.setDirector(person);
+        // persist new movie (not the director already there)
+        entityManager.persist(movie2);
+        entityManager.flush();
+    }
+
+    /**
+     * test settings cascade = CascadeType.REMOVE
+     * on many-to-many association director
+     */
+    @Test
+    void testRemoveMovieWithDirectorCascade(){
+        // create movie with its director
+        Movie movie = new Movie("Django Unchained", 2012);
+        Person person = new Person("Quentin Tarantino", LocalDate.of(1963, 3, 27));
+        movie.setDirector(person);
+        // persist both by saving only movie
+        entityManager.persist(movie);
+        entityManager.flush();
+        // delete movie
+        entityManager.remove(movie);  // by cascade remove its director
+        entityManager.flush();
+    }
+
+    // @Rollback(false)
+    @Test
+    void testRemoveDirectorCascadeOrNotCascade(){
+        // create movie with its director
+        Movie movie = new Movie("Django Unchained", 2012);
+        Person person = new Person("Quentin Tarantino", LocalDate.of(1963, 3, 27));
+        movie.setDirector(person);
+        // persist both by saving only movie
+        entityManager.persist(movie);
+        entityManager.flush();
+        var idPerson = person.getId();
+        entityManager.clear();
+        // delete person :
+        var personRead = entityManager.find(Person.class, idPerson);
+        // - with on delete cascade set : movies from this person are removed to
+        // but you don't see it in the SQL, it's done internally in the db
+        // entityManager.remove(personRead);
+        // entityManager.flush();  // OK both are removed
+        // - with default settings : javax.persistence.PersistenceException: org.hibernate.exception.ConstraintViolationException: could not execute statement
+        // person can't be removed because it's referenced by a movie
+        assertThrows(PersistenceException.class, () -> {
+                entityManager.remove(personRead);
+                entityManager.flush();
+        });
+        // NB: delete movie if ondelete cascade set (by RDBMS directly not hibernate)
+
+    }
+
+    @Test
+    void testRemoveDirectorSetNullProg(){
+        // create movie with its director
+        Movie movie = new Movie("Django Unchained", 2012);
+        Person person = new Person("Quentin Tarantino", LocalDate.of(1963, 3, 27));
+        movie.setDirector(person);
+        // persist both by saving only movie
+        entityManager.persist(movie);
+        entityManager.flush();
+        // delete person with on delete set null (programmed)
+        movie.setDirector(null);  // repeat on all movies directed by this person
+        entityManager.remove(person);
+        entityManager.flush();
+    }
+
+    /**
+     * alt way of removing person and his movies as a director
+     */
+    @Test
+    void testRemoveDirectorCascadeProg(){
+        // create movie with its director
+        Movie movie = new Movie("Django Unchained", 2012);
+        Person person = new Person("Quentin Tarantino", LocalDate.of(1963, 3, 27));
+        movie.setDirector(person);
+        // persist both by saving only movie
+        entityManager.persist(movie);
+        entityManager.flush();
+        // delete person with on delete cascade (programmed)
+        entityManager.remove(movie); // repeat for all movies from this director
+        entityManager.remove(person);
+        entityManager.flush();
+    }
+
+
 }
