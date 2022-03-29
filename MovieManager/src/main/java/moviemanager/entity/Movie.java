@@ -41,7 +41,13 @@ public class Movie {
     private List<String> genres = new ArrayList<>(); // or initialize in constructor
     // private Set<String> genres;
 
-
+    // @Transient // when mapping is not ready
+    @ManyToOne(
+            optional = true,
+            fetch = FetchType.LAZY // default Eager
+    )
+    @JoinColumn(name="fk_director_id", nullable = true)
+    private Person director;
 
     // mandatory if at least another constructor
     public Movie(){
@@ -126,6 +132,14 @@ public class Movie {
 
     public void setGenres(List<String> genres) {
         this.genres = genres;
+    }
+
+    public Person getDirector() {
+        return director;
+    }
+
+    public void setDirector(Person director) {
+        this.director = director;
     }
 
     @Override

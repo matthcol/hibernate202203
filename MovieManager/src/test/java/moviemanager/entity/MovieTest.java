@@ -71,7 +71,7 @@ class MovieTest {
                 () -> entityManager.persist(movie));
     }
 
-    //@Rollback(false)
+    @Rollback(false)
     @Test
     void testSaveMovieWithDirector(){
         Movie movie = new Movie("Django Unchained", 2012);
@@ -81,14 +81,23 @@ class MovieTest {
         entityManager.persist(movie2);
         entityManager.persist(person);
         entityManager.flush();
+        // set bidirectional associations
+        movie.setDirector(person);
+        movie2.setDirector(person);
         Collections.addAll(person.getDirectedMovies(), movie, movie2);
         entityManager.flush(); // to generate DML update x 2 now
         int idPerson = person.getId();
-        // clear cache before reading data persisted
+        int idMovie = movie.getId();
+        // clear cache before reading data persisted from person point of view
         entityManager.clear();
         Person personRead = entityManager.find(Person.class, idPerson);
         System.out.println(personRead);
         System.out.println(personRead.getDirectedMovies());
+        // clear cache before reading data persisted from movie point of view
+        entityManager.clear();
+        Movie movieRead = entityManager.find(Movie.class, idMovie);
+        System.out.println(movieRead);
+        System.out.println(movieRead.getDirector());
     }
 
 }

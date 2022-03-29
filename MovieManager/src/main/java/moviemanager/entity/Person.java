@@ -16,8 +16,8 @@ public class Person {
     // @Temporal should only be set on a java.util.Date or java.util.Calendar property
     private LocalDate birthdate;
 
-    @OneToMany // fetch Lazy by default
-    @JoinColumn(name="fk_director_id", nullable = true)
+    // association already defined in entity Movie on attribute director
+    @OneToMany(mappedBy = "director")
     private Set<Movie> directedMovies = new HashSet<>();
 
     public Person() {
