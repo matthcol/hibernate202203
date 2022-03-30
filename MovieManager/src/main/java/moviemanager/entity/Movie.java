@@ -13,6 +13,8 @@ import java.util.Set;
 @Entity
 @Table(name = "movie", uniqueConstraints = @UniqueConstraint(columnNames = {"title", "year"}))
 // @DynamicUpdate // Hibernate (not JPA) annotation to update only what's necessary
+@NamedQuery(name="Movie.findByDirectorBorn",
+        query = "select m from Movie m join m.director d where YEAR(d.birthdate) = :year")
 public class Movie {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,7 +60,7 @@ public class Movie {
     // @OnDelete(action = OnDeleteAction.CASCADE) // Hibernate Only not JPA
     private Person director;
 
-    @ManyToMany(fetch=FetchType.EAGER) // fetch Lazy default
+    @ManyToMany // (fetch=FetchType.EAGER) // fetch Lazy default
     @JoinTable(
             name = "play",
             joinColumns = @JoinColumn(name="fk_movie_id"), // FK to this entity
